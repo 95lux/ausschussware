@@ -40,9 +40,8 @@ class Background extends React.Component {
                     artwork: track.artwork_url
                 }
             })
-
-            this.setState(prevState => ({
-                tracks: tracksNew
+            this.setState((prevState, tracksNew) => ({
+                    tracks: tracksNew
             }));
         })
         console.log(this.state);
@@ -57,15 +56,15 @@ class Background extends React.Component {
 
         // cycle through images[]
 
-        if(i <= images.length){
-            if(i > 0){
-                backgroundUrl = images[i-1];
-            }
-            i++;
-        } else {
-            i = 0;
-            backgroundUrl = images[i];
-        }
+        // if(i <= images.length){
+        //     if(i > 0){
+        //         backgroundUrl = images[i-1];
+        //     }
+        //     i++;
+        // } else {
+        //     i = 0;
+        //     backgroundUrl = images[i];
+        // }
 
         // select random element from images[]
 
