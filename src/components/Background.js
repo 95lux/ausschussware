@@ -1,10 +1,7 @@
 import React from 'react'
 
 
-var backgrounds = new Array(
-
-)
-
+var backgrounds = []
 var i = 0;
 
 var backgroundUrl
@@ -18,9 +15,8 @@ function importAll(r) {
     return r.keys().map(r);
 }
 
-
-  var userId = 288554452; // user_id of Ausschu$$war€
-  var clientId = 'LPqZxMy7VDZTQ0w9g4fuCdMNflDZEdIs&' // client_id of Ausschu$$war€
+var userId = 288554452; // user_id of Ausschu$$war€
+var clientId = 'LPqZxMy7VDZTQ0w9g4fuCdMNflDZEdIs&' // client_id of Ausschu$$war€
 
 class Background extends React.Component {
 
@@ -29,23 +25,22 @@ class Background extends React.Component {
         imageState: false
     }
 
-    componentDidMount() {
-        fetch('https://api.soundcloud.com/users/288554452/tracks?client_id=LPqZxMy7VDZTQ0w9g4fuCdMNflDZEdIs')
-        .then(res => res.json())
-        .then(data => {
-            let tracksNew = data.map(function(track) {
-                return {
-                    id: track.id,
-                    stream: track.stream_url,
-                    artwork: track.artwork_url
-                }
-            })
-            this.setState((prevState, tracksNew) => ({
-                    tracks: tracksNew
-            }));
+    async loadData() {
+         let respones = await fetch('https://api.soundcloud.com/users/288554452/tracks?client_id=LPqZxMy7VDZTQ0w9g4fuCdMNflDZEdIs')
+        
+        let tracks = data.map(function(track) {
+            return {
+                id: track.id,
+                stream: track.stream_url,
+                artwork: track.artwork_url
+            }
         })
-        console.log(this.state);
+        
+        this.setState({ tracks })
+    }
 
+    componentDidMount() {
+        this.loadData()
     }
 
     changeBg() {
@@ -72,6 +67,8 @@ class Background extends React.Component {
     }
 
     render () {
+        console.log(this.state)
+        
         return (
             <div onMouseMove={this.changeBg.bind(this)} onTouchMove={this.changeBg.bind(this)} style={ sectionStyle }>
                 <img src={backgroundUrl} style={sectionStyle}></img>
