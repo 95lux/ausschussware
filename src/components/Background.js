@@ -20,7 +20,7 @@ function importAll(r) {
 
 
   var userId = 288554452; // user_id of Ausschu$$war€
-  var clientId = 'LPqZxMy7VDZTQ0w9g4fuCdMNflDZEdIs&'
+  var clientId = 'LPqZxMy7VDZTQ0w9g4fuCdMNflDZEdIs&' // client_id of Ausschu$$war€
 
 class Background extends React.Component {
 
@@ -40,7 +40,10 @@ class Background extends React.Component {
                     artwork: track.artwork_url
                 }
             })
-            console.log(tracksNew);
+
+            this.setState(prevState => ({
+                tracks: tracksNew
+            }));
         })
         console.log(this.state);
 
@@ -52,17 +55,17 @@ class Background extends React.Component {
             imageState: !prevState.imageState
         }));
 
-        // cycle through iamges[]
+        // cycle through images[]
 
-        // if(i <= images.length){
-        //     if(i > 0){
-        //         backgroundUrl = images[i-1];
-        //     }
-        //     i++;
-        // } else {
-        //     i = 0;
-        //     backgroundUrl = images[i];
-        // }
+        if(i <= images.length){
+            if(i > 0){
+                backgroundUrl = images[i-1];
+            }
+            i++;
+        } else {
+            i = 0;
+            backgroundUrl = images[i];
+        }
 
         // select random element from images[]
 
