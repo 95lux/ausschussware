@@ -1,102 +1,17 @@
-import React from 'react'
+import React, { Component } from 'react'
+import axios from 'axios'
+import Track from './Track.js'
 
-var tracks = [];
-var nextUrl = '';
-var net = true;
-// var userId = 288554452; // user_id of Ausschu$$war€
-// var clientId = 'LPqZxMy7VDZTQ0w9g4fuCdMNflDZEdIs&' // client_id of Ausschu$$war€
+const userID = '288554452'
+const clientID = 'jMtgnPXQjVKtkucQ61iCf5jKyDXGXxbS'
 
-class Tracks extends React.Component {
-
-    state = {
-        tracks: [],
-        currentTrack: {}
-    }
-
-    async loadData() {
-        let responses = await fetch('https://api.soundcloud.com/users/288554452/tracks?client_id=LPqZxMy7VDZTQ0w9g4fuCdMNflDZEdIs')
-        .then(res => res.json())
-            .then(data => {
-                let tracksFetched = data.map(function(track) {
-                    let artworkSmall = track.artwork_url
-                    if (artworkSmall == null) {
-                        artworkSmall = track.user.avatar_url
-                    }
-                    let artworkBig = artworkSmall.replace("large", "t500x500");
-                    return {
-                        id: track.id,
-                        stream: track.stream_url,
-                        artwork: artworkBig
-                    }
-                })
-
-                tracks = tracks.concat(tracksFetched);
-            })
-
-    }
-
-    async loadFullData(url) {
-        let responses = await fetch(url)
-        .then(res => res.json())
-            .then(data => {
-                let tracksFetched = data.collection.map(function(track) {
-                    let artworkSmall = track.artwork_url
-                    if (artworkSmall == null) {
-                        artworkSmall = track.user.avatar_url
-                    }
-                    let artworkBig = artworkSmall.replace("large", "t500x500");
-                    return {
-                        id: track.id,
-                        stream: track.stream_url,
-                        artwork: artworkBig
-                    }
-                })
-
-                tracks = tracks.concat(tracksFetched);
-
-                nextUrl = data.next_href;
-            })
-        this.loadFullData(nextUrl)
-    }
-
-
-    componentDidMount() {
-        let url = 'https://api.soundcloud.com/users/288554452/tracks?client_id=LPqZxMy7VDZTQ0w9g4fuCdMNflDZEdIs&linked_partitioning=1'
-        // this.loadData();
-        this.loadFullData(url);
-
-    }
-
-    changeTrack() {
-        // let newTrack = this.state.tracks[Math.floor(Math.random() * this.state.tracks.length)];
-        let newTrack = tracks[Math.floor(Math.random() * tracks.length)];
-
-        if (net) {
-            this.setState(prevState => ({
-                currentTrack: newTrack
-            }));
-            net = false
-        } else {
-            net = true
-        }
-
-
-        // console.log(newTrack.artwork);
-    }
-
-    render () {
-        return (
-            <div style={bgStyle}>
-                <div onMouseMove={this.changeTrack.bind(this)} onTouchMove={this.changeTrack.bind(this)} style={ sectionStyle }>
-                    <img src={this.state.currentTrack.artwork} style={sectionStyle}></img>
-                </div>
-            </div>
-        )
-    }
+var bgStyle = {
+    width: "100vw",
+    height: "100vh",
+    backgroundColor: 'black'
 }
 
-var sectionStyle = {
-    // backgroundImage: "url(" + backgroundUrl + ")",
+var imageStyle = {
     width: "100vw",
     height: "100vh",
     backgroundSize: 'cover',
@@ -105,11 +20,171 @@ var sectionStyle = {
     backgroundColor: 'slateblue'
 };
 
-var bgStyle = {
-    width: "100vw",
-    height: "100vh",
-    backgroundColor: 'black'
+export default class Tracks extends Component {
+
+    state = {
+        volume: 0.8,
+        tracks: [],
+        loadedTracks: [],
+        currentShownPos: null,
+        currentTrackPos: null,
+        lastTrackPos: null,
+        interacted: false // chrome wants user interaction before playing audio
+    }
+
+    delayer = null
+
+    componentDidMount() {
+        let url = `https://api.soundcloud.com/users/${userID}/tracks?client_id=${clientID}&linked_partitioning=1`
+
+        this.loadFullData(url)
+    }
+
+    normalizeAndLoadTrack(track) {
+
+        let artwork = track.artwork_url
+            ? track.artwork_url
+            : track.user.avatar_url
+
+        artwork = artwork.replace("large", "t500x500")
+
+        let data = {
+            artwork,
+            id: track.id
+        }
+
+        let img = new Image()
+        img.src = data.artwork
+
+        // add image to array if data preloaded
+        img.onload = () => {
+            let loadedTracks = this.state.loadedTracks
+
+            loadedTracks.push(data)
+
+            this.setState({ loadedTracks })
+        }
+
+        return data
+    }
+
+    async loadFullData(url) {
+        try {
+            let { data } = await axios.get(url)
+
+            let tracks = this.state.tracks
+
+            for (let track of data.collection) {
+
+                let data = this.normalizeAndLoadTrack(track)
+                tracks.push(new Track(data))
+            }
+
+            this.setState({ tracks })
+
+            if (data.hasOwnProperty('next_href')) {
+                this.loadFullData(data.next_href)
+            }
+
+        } catch (error) {
+            console.log(error)
+        }
+    }
+
+    changeTrack() {
+        // 2 each seconds, 3 each third, 4 each fourth
+        const reactOnZero = +new Date() % 2
+
+        if (reactOnZero !== 0) {
+            return null
+        }
+
+        let currentShownPos = Math.floor(Math.random() * this.state.loadedTracks.length)
+
+        this.setState({ currentShownPos })
+
+        if (this.state.interacted) {
+            clearTimeout(this.delayer)
+
+            this.delayer = setTimeout(this.selectTrack.bind(this), 300)
+        }
+    }
+
+    selectTrack() {
+
+        clearTimeout(this.delayer)
+
+        let lastTrackPos = this.state.currentTrackPos
+        let currentTrackPos = this.state.currentShownPos
+
+        if (!!lastTrackPos) {
+            this.state.tracks[lastTrackPos].stop()
+        } else {
+            lastTrackPos = this.state.currentShownPos
+        }
+
+        this.state.tracks[currentTrackPos].play(this.state.volume)
+
+        this.setState({ lastTrackPos, currentTrackPos })
+
+    }
+
+    onScroll(e) {
+        e.preventDefault()
+        e.stopPropagation()
+        let changeCount = Math.sign(e.deltaY) / 100
+
+        console.log(changeCount)
+        let volume = this.state.volume
+
+        volume += changeCount
+
+        if (volume < 0) {
+            volume = 0
+        }
+
+        if (volume > 1) {
+            volume = 1
+        }
+
+        try {
+            this.state.tracks[this.state.currentTrackPos].setVolume(volume)
+        } catch(e) {
+
+        }
+
+
+        this.setState({ volume })
+    }
+
+    interacted() {
+        this.setState({
+            interacted: true
+        })
+    }
+
+    getImage() {
+
+        if (!this.state.currentTrackPos) {
+            return null
+        }
+
+        let track = this.state.loadedTracks[this.state.currentShownPos]
+        return <img src={track.artwork} style={imageStyle} alt="" />
+    }
+
+    render () {
+
+        return (
+            <div id="area" style={bgStyle}
+                onClick={this.interacted.bind(this)}
+                onWheel={this.onScroll.bind(this)}
+                onMouseMove={this.changeTrack.bind(this)}
+                onTouchStart={this.changeTrack.bind(this)}
+                onTouchMove={this.changeTrack.bind(this)}
+            >
+                {this.getImage()}
+            </div>
+        )
+    }
 }
-
-
-export default Tracks;
