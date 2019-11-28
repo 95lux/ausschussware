@@ -1,5 +1,7 @@
 import React, { Component } from 'react'
 import axios from 'axios'
+import extend from 'extend'
+
 import Track from './Track.js'
 
 const userID = '288554452'
@@ -17,6 +19,8 @@ var imageStyle = {
     backgroundSize: 'cover',
     backgroundRepeat: 'no-repeat',
     position: 'center',
+    pointerEvents: 'none',
+    userSelect: 'none',
     backgroundColor: 'slateblue'
 };
 
@@ -26,13 +30,11 @@ export default class Tracks extends Component {
         volume: 0.8,
         tracks: [],
         loadedTracks: [],
+        listeningHistory: [],
         currentShownPos: null,
         currentTrackPos: null,
-        lastTrackPos: null,
-        interacted: false // chrome wants user interaction before playing audio
+        lastTrackPos: null
     }
-
-    delayer = null
 
     componentDidMount() {
         let url = `https://api.soundcloud.com/users/${userID}/tracks?client_id=${clientID}&linked_partitioning=1`
@@ -92,6 +94,7 @@ export default class Tracks extends Component {
     }
 
     changeTrack() {
+
         // 2 each seconds, 3 each third, 4 each fourth
         const reactOnZero = +new Date() % 2
 
@@ -102,20 +105,19 @@ export default class Tracks extends Component {
         let currentShownPos = Math.floor(Math.random() * this.state.loadedTracks.length)
 
         this.setState({ currentShownPos })
-
-        if (this.state.interacted) {
-            clearTimeout(this.delayer)
-
-            this.delayer = setTimeout(this.selectTrack.bind(this), 300)
-        }
     }
 
     selectTrack() {
 
         clearTimeout(this.delayer)
 
+        this.play(this.state.currentShownPos)
+
+    }
+
+    play(currentTrackPos = 0) {
+
         let lastTrackPos = this.state.currentTrackPos
-        let currentTrackPos = this.state.currentShownPos
 
         if (!!lastTrackPos) {
             this.state.tracks[lastTrackPos].stop()
@@ -123,16 +125,24 @@ export default class Tracks extends Component {
             lastTrackPos = this.state.currentShownPos
         }
 
+        let listeningHistory = this.state.listeningHistory
+
+        if (listeningHistory.length > 34) {
+            listeningHistory.shift()
+        }
+
+        listeningHistory.push(currentTrackPos)
+
         this.state.tracks[currentTrackPos].play(this.state.volume)
 
-        this.setState({ lastTrackPos, currentTrackPos })
-
+        this.setState({ lastTrackPos, currentTrackPos, listeningHistory })
     }
 
     onScroll(e) {
         e.preventDefault()
         e.stopPropagation()
-        let changeCount = Math.sign(e.deltaY) / 100
+
+        let changeCount = Math.sign(e.deltaY) / 10
 
         console.log(changeCount)
         let volume = this.state.volume
@@ -153,19 +163,42 @@ export default class Tracks extends Component {
 
         }
 
-
         this.setState({ volume })
     }
 
-    interacted() {
-        this.setState({
-            interacted: true
+    getHistory() {
+
+        if (this.state.listeningHistory.length === 0) {
+            return null
+        }
+
+        let history = extend(true, [], this.state.listeningHistory).reverse()
+
+        let list = history.map((trackPos, key) => {
+
+            let track = this.state.loadedTracks[trackPos]
+
+            return (
+                <li key={key} onClick={this.play.bind(this, trackPos)}>
+                    <img src={track.artwork} alt="" />
+                </li>
+            )
         })
+
+        return (
+            <ul class="history">
+                {list}
+            </ul>
+        )
+    }
+
+    playCurrentShown() {
+        this.play(this.state.currentShownPos)
     }
 
     getImage() {
 
-        if (!this.state.currentTrackPos) {
+        if (!this.state.currentShownPos) {
             return null
         }
 
@@ -177,12 +210,13 @@ export default class Tracks extends Component {
 
         return (
             <div id="area" style={bgStyle}
-                onClick={this.interacted.bind(this)}
+                onClick={this.playCurrentShown.bind(this)}
                 onWheel={this.onScroll.bind(this)}
                 onMouseMove={this.changeTrack.bind(this)}
                 onTouchStart={this.changeTrack.bind(this)}
                 onTouchMove={this.changeTrack.bind(this)}
             >
+                {this.getHistory()}
                 {this.getImage()}
             </div>
         )

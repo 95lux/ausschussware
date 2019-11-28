@@ -5,9 +5,33 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+   cursor: url("lipton.png"), auto;
 }
 
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
     monospace;
+}
+
+.history {
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 40px;
+    z-index: 1;
+    bottom: 0;
+    height: 100%;
+    overflow: hidden;
+}
+
+.history li {
+    display: block;
+    width: 100%;
+}
+
+.history li img {
+    display: block;
+    width: 100%;
+    height: auto;
 }
