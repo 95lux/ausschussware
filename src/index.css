@@ -1,17 +1,16 @@
 body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
-    "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-
-   cursor: url("lipton.png"), auto;
+    margin: 0;
+    padding: 0;
+    font-family: "Helvetica Neue", sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    height: 100%;
+    overflow: hidden;
+    cursor: url("lipton.png"), auto;
 }
 
 code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
-    monospace;
+    font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New", monospace;
 }
 
 .history {
@@ -23,6 +22,8 @@ code {
     bottom: 0;
     height: 100%;
     overflow: hidden;
+    padding: 0;
+    margin: 0;
 }
 
 .history li {
@@ -34,4 +35,39 @@ code {
     display: block;
     width: 100%;
     height: auto;
+    cursor: pointer;
+    opacity: 0.6;
+}
+
+.history li img:hover {
+    opacity: 1;
+}
+
+.touchpad {
+    position: absolute;
+    width: 300px;
+    height: 300px;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    cursor: url("aarebrot.png"), auto;
+    background-color: rgba(255,255,255, 0.15);
+}
+
+.volume {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.volume i {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    background-color: rgba(255,255,255, 0.15);
+    left: 0;
+    filter: invert(1);
 }

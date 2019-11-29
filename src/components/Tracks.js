@@ -3,6 +3,8 @@ import axios from 'axios'
 import extend from 'extend'
 
 import Track from './Track.js'
+import History from './history.js'
+import Touchpad from './touchpad.js'
 
 const userID = '288554452'
 const clientID = 'jMtgnPXQjVKtkucQ61iCf5jKyDXGXxbS'
@@ -107,44 +109,51 @@ export default class Tracks extends Component {
         this.setState({ currentShownPos })
     }
 
-    selectTrack() {
-
-        clearTimeout(this.delayer)
-
-        this.play(this.state.currentShownPos)
-
-    }
-
     play(currentTrackPos = 0) {
 
-        let lastTrackPos = this.state.currentTrackPos
+        let lastTrackPos = null
 
-        if (!!lastTrackPos) {
-            this.state.tracks[lastTrackPos].stop()
-        } else {
-            lastTrackPos = this.state.currentShownPos
+        // stop last track
+        if (this.state.lastTrackPos !== null) {
+            this.state.tracks[this.state.lastTrackPos].stop()
         }
 
+        this.state.tracks[currentTrackPos].play(this.state.volume)
+        lastTrackPos = currentTrackPos
+
+        this.setState({ lastTrackPos, currentTrackPos })
+    }
+
+    selectTrack(currentTrackPos = 0, e) {
+        e.preventDefault()
+        e.stopPropagation()
+        this.play(currentTrackPos)
+
+        this.setState({
+            currentShownPos: currentTrackPos
+        })
+    }
+
+    pushToHistory(currentTrackPos) {
         let listeningHistory = this.state.listeningHistory
 
+        // buffer overflow remove oldest from history
         if (listeningHistory.length > 34) {
             listeningHistory.shift()
         }
 
         listeningHistory.push(currentTrackPos)
 
-        this.state.tracks[currentTrackPos].play(this.state.volume)
-
-        this.setState({ lastTrackPos, currentTrackPos, listeningHistory })
+        this.setState({ listeningHistory })
     }
 
     onScroll(e) {
         e.preventDefault()
         e.stopPropagation()
 
-        let changeCount = Math.sign(e.deltaY) / 10
+        let changeCount = -(Math.sign(e.deltaY) / 80)
 
-        console.log(changeCount)
+
         let volume = this.state.volume
 
         volume += changeCount
@@ -179,14 +188,17 @@ export default class Tracks extends Component {
             let track = this.state.loadedTracks[trackPos]
 
             return (
-                <li key={key} onClick={this.play.bind(this, trackPos)}>
+                <li key={key} onClick={this.selectTrack.bind(this, trackPos)}>
                     <img src={track.artwork} alt="" />
                 </li>
             )
         })
 
         return (
-            <ul class="history">
+            <ul class="history" onMouseMove={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+            }}>
                 {list}
             </ul>
         )
@@ -194,6 +206,7 @@ export default class Tracks extends Component {
 
     playCurrentShown() {
         this.play(this.state.currentShownPos)
+        this.pushToHistory(this.state.currentShownPos)
     }
 
     getImage() {
@@ -208,15 +221,27 @@ export default class Tracks extends Component {
 
     render () {
 
+        let style = {
+            height: this.state.volume * 100 + '%'
+        }
+
         return (
             <div id="area" style={bgStyle}
                 onClick={this.playCurrentShown.bind(this)}
                 onWheel={this.onScroll.bind(this)}
-                onMouseMove={this.changeTrack.bind(this)}
-                onTouchStart={this.changeTrack.bind(this)}
-                onTouchMove={this.changeTrack.bind(this)}
             >
-                {this.getHistory()}
+                <Touchpad changeTrack={this.changeTrack.bind(this)}>
+                    <div className="volume">
+                        <i style={style} />
+                    </div>
+                </Touchpad>
+
+                <History
+                    selectTrack={this.selectTrack.bind(this)}
+                    loadedTracks={this.state.loadedTracks}
+                    listeningHistory={this.state.listeningHistory}
+                />
+
                 {this.getImage()}
             </div>
         )

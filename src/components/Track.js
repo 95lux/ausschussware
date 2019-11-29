@@ -23,7 +23,7 @@ export default class Track {
             }).on('complete', () => {
                 console.log(`${this.data.id} started`)
             });
-        }, 1)
+        }, 10)
     }
 
     stop() {
@@ -39,11 +39,6 @@ export default class Track {
     }
 
     setVolume(newVolume) {
-        console.log(this.audio.volume, newVolume)
-        new Between(this.audio.volume, newVolume).time(200).easing(Between.Easing.Cubic.InOut).on('update', (value) => {
-            this.audio.volume = value
-        }).on('complete', () => {
-            console.log(`${this.data.id} volume changed`)
-        });
+        this.audio.volume = newVolume
     }
 }
