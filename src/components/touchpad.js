@@ -9,6 +9,7 @@ export default class Touchpad extends Component {
                 onMouseMove={this.props.changeTrack}
                 onTouchStart={this.props.changeTrack}
                 onTouchMove={this.props.changeTrack}
+                onMouseOut={this.props.setToCurrent}
             >
                 {this.props.children}
             </div>

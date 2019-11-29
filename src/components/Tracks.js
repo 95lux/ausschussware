@@ -1,41 +1,31 @@
 import React, { Component } from 'react'
 import axios from 'axios'
-import extend from 'extend'
 
-import Track from './Track.js'
-import History from './history.js'
-import Touchpad from './touchpad.js'
+import AudioWare from '../controller/audio.js'
+
+import History from './History.js'
+import Touchpad from './Touchpad.js'
+import VolumeDisplay from './VolumeDisplay.js'
+import Background from './Background.js'
 
 const userID = '288554452'
 const clientID = 'jMtgnPXQjVKtkucQ61iCf5jKyDXGXxbS'
-
-var bgStyle = {
-    width: "100vw",
-    height: "100vh",
-    backgroundColor: 'black'
-}
-
-var imageStyle = {
-    width: "100vw",
-    height: "100vh",
-    backgroundSize: 'cover',
-    backgroundRepeat: 'no-repeat',
-    position: 'center',
-    pointerEvents: 'none',
-    userSelect: 'none',
-    backgroundColor: 'slateblue'
-};
 
 export default class Tracks extends Component {
 
     state = {
         volume: 0.8,
-        tracks: [],
         loadedTracks: [],
         listeningHistory: [],
+        queue: [],
         currentShownPos: null,
-        currentTrackPos: null,
-        lastTrackPos: null
+        currentTrackPos: null
+    }
+
+    constructor(props) {
+        super(props)
+
+        this.audio = new AudioWare({}, this.playNext.bind(this))
     }
 
     componentDidMount() {
@@ -50,7 +40,7 @@ export default class Tracks extends Component {
             ? track.artwork_url
             : track.user.avatar_url
 
-        artwork = artwork.replace("large", "t500x500")
+        artwork = artwork.replace('large', 't500x500')
 
         let data = {
             artwork,
@@ -76,15 +66,9 @@ export default class Tracks extends Component {
         try {
             let { data } = await axios.get(url)
 
-            let tracks = this.state.tracks
-
             for (let track of data.collection) {
-
-                let data = this.normalizeAndLoadTrack(track)
-                tracks.push(new Track(data))
+                this.normalizeAndLoadTrack(track)
             }
-
-            this.setState({ tracks })
 
             if (data.hasOwnProperty('next_href')) {
                 this.loadFullData(data.next_href)
@@ -95,7 +79,13 @@ export default class Tracks extends Component {
         }
     }
 
-    changeTrack() {
+    getRandomTrack() {
+        let currentShownPos = Math.floor(Math.random() * this.state.loadedTracks.length)
+
+        return currentShownPos
+    }
+
+    showRandomTrack() {
 
         // 2 each seconds, 3 each third, 4 each fourth
         const reactOnZero = +new Date() % 2
@@ -104,29 +94,31 @@ export default class Tracks extends Component {
             return null
         }
 
-        let currentShownPos = Math.floor(Math.random() * this.state.loadedTracks.length)
+        let currentShownPos = this.getRandomTrack()
 
+        this.setState({ currentShownPos })
+    }
+
+    showCurrentSelectedTrack() {
+        let currentShownPos = this.state.currentTrackPos
         this.setState({ currentShownPos })
     }
 
     play(currentTrackPos = 0) {
 
-        let lastTrackPos = null
+        this.audio.play(this.state.loadedTracks[currentTrackPos].id)
 
-        // stop last track
-        if (this.state.lastTrackPos !== null) {
-            this.state.tracks[this.state.lastTrackPos].stop()
-        }
-
-        this.state.tracks[currentTrackPos].play(this.state.volume)
-        lastTrackPos = currentTrackPos
-
-        this.setState({ lastTrackPos, currentTrackPos })
+        this.setState({ currentTrackPos })
     }
 
     selectTrack(currentTrackPos = 0, e) {
         e.preventDefault()
         e.stopPropagation()
+
+        if (this.state.currentShownPos === currentTrackPos) {
+            return null
+        }
+
         this.play(currentTrackPos)
 
         this.setState({
@@ -148,9 +140,6 @@ export default class Tracks extends Component {
     }
 
     onScroll(e) {
-        e.preventDefault()
-        e.stopPropagation()
-
         let changeCount = -(Math.sign(e.deltaY) / 80)
 
 
@@ -166,74 +155,59 @@ export default class Tracks extends Component {
             volume = 1
         }
 
-        try {
-            this.state.tracks[this.state.currentTrackPos].setVolume(volume)
-        } catch(e) {
-
-        }
+        this.audio.setVolume(volume)
 
         this.setState({ volume })
     }
 
-    getHistory() {
+    playNext() {
 
-        if (this.state.listeningHistory.length === 0) {
-            return null
+        let nextTrack = this.getRandomTrack()
+
+        /* play track from queue if not empty */
+        if (this.state.queue.length > 0) {
+
+            let queue = this.state.queue
+            nextTrack = queue[0]
+
+            queue.shift()
+
+            this.setState({ queue })
         }
 
-        let history = extend(true, [], this.state.listeningHistory).reverse()
+        this.play(nextTrack)
 
-        let list = history.map((trackPos, key) => {
-
-            let track = this.state.loadedTracks[trackPos]
-
-            return (
-                <li key={key} onClick={this.selectTrack.bind(this, trackPos)}>
-                    <img src={track.artwork} alt="" />
-                </li>
-            )
-        })
-
-        return (
-            <ul class="history" onMouseMove={(e) => {
-                e.preventDefault()
-                e.stopPropagation()
-            }}>
-                {list}
-            </ul>
-        )
+        this.pushToHistory(nextTrack)
     }
 
     playCurrentShown() {
-        this.play(this.state.currentShownPos)
-        this.pushToHistory(this.state.currentShownPos)
-    }
-
-    getImage() {
 
         if (!this.state.currentShownPos) {
             return null
         }
 
-        let track = this.state.loadedTracks[this.state.currentShownPos]
-        return <img src={track.artwork} style={imageStyle} alt="" />
+        if (this.state.listeningHistory.length > 0 && this.state.listeningHistory[this.state.listeningHistory.length - 1] === this.state.currentShownPos) {
+            return null
+        }
+
+        this.play(this.state.currentShownPos)
+        this.pushToHistory(this.state.currentShownPos)
     }
 
     render () {
 
-        let style = {
-            height: this.state.volume * 100 + '%'
-        }
-
         return (
-            <div id="area" style={bgStyle}
-                onClick={this.playCurrentShown.bind(this)}
-                onWheel={this.onScroll.bind(this)}
+            <Background
+                setVolume={this.onScroll.bind(this)}
+                playCurrentShown={this.playCurrentShown.bind(this)}
+                track={this.state.loadedTracks[this.state.currentShownPos]}
             >
-                <Touchpad changeTrack={this.changeTrack.bind(this)}>
-                    <div className="volume">
-                        <i style={style} />
-                    </div>
+
+                <Touchpad
+                    changeTrack={this.showRandomTrack.bind(this)}
+                    setToCurrent={this.showCurrentSelectedTrack.bind(this)}
+                >
+                    <VolumeDisplay volume={this.state.volume} />
                 </Touchpad>
 
                 <History
@@ -242,8 +216,7 @@ export default class Tracks extends Component {
                     listeningHistory={this.state.listeningHistory}
                 />
 
-                {this.getImage()}
-            </div>
+            </Background>
         )
     }
 }

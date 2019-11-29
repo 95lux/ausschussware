@@ -43,6 +43,44 @@ code {
     opacity: 1;
 }
 
+.artwork {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100vw;
+    height: 100vh;
+    background-size: cover;
+    background-repeat: no-repeat;
+    position: center;
+    pointer-events: none;
+    user-select: none;
+    background-color: slateblue;
+    animation: zoom 90s linear 0s infinite normal;
+    z-index: 0;
+}
+
+@keyframes zoom {
+    0% {
+        width: 100vw;
+        height: 100vh;
+    }
+    50% {
+        width: 120vw;
+        height: 120vh;
+    }
+    100% {
+        width: 100vw;
+        height: 100vh;
+    }
+}
+
+#background {
+    width: 100vw;
+    height: 100vh;
+    background-color: slateblue;
+}
+
 .touchpad {
     position: absolute;
     width: 300px;
@@ -51,7 +89,9 @@ code {
     left: 50%;
     transform: translateX(-50%);
     cursor: url("aarebrot.png"), auto;
+    user-select: none;
     background-color: rgba(255,255,255, 0.15);
+    z-index: 1;
 }
 
 .volume {
