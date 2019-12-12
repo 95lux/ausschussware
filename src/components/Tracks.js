@@ -1,5 +1,6 @@
 import React from 'react'
 import Audioplayer from './Audioplayer'
+import Artwork from './Artwork'
 
 const userId = 288554452; // user_id of Ausschu$$war€
 // const clientId = 'LPqZxMy7VDZTQ0w9g4fuCdMNflDZEdIs' // client_id of Ausschu$$war€
@@ -15,18 +16,18 @@ var precached = [{
 var net = true;
 var tracksLength = null;
 
-
-
-
 class Tracks extends React.Component {
 
-    state = {
-        currentTrack: {
-            id: null,
-            stream: '',
-            artwork: '',
-            title: ''
-        }
+    constructor(props) {
+        super(props);
+        this.state = {
+            playing: false,
+            currentTrack: {
+                id: '',
+                artwork: '',
+                title: ''
+            }
+        };
     }
 
     async loadFullData(url) {
@@ -93,63 +94,63 @@ class Tracks extends React.Component {
     componentDidMount() {
         let url = `https://api.soundcloud.com/users/${userId}/tracks?client_id=${clientId}&linked_partitioning=1&limit=200`
         this.loadFullData(url);
-
-        this.setState(prevState => ({
-            currentTrack: {
-                id: 1,
-                stream: null,
-                artwork: 'https://i1.sndcdn.com/avatars-000684564896-2q8pvk-t500x500.jpg'
-            }
-        }));
-
+        this.setState({ currentTrack: {
+            id: 1,
+            stream: null,
+            artwork: 'https://i1.sndcdn.com/avatars-000684564896-2q8pvk-t500x500.jpg'
+        }})
         // this.changeTrack();
     }
 
     changeTrack = () => {
         // let newTrack = this.state.tracks[Math.floor(Math.random() * this.state.tracks.length)];
-        let newTrack = precached[Math.floor(Math.random() * precached.length)];
+        if (this.state.playing !== true) {
+            let newTrack = precached[Math.floor(Math.random() * precached.length)];
+            if (net) {
+                this.setState(prevState => ({
+                    currentTrack: newTrack
+                }));
 
-        if (net) {
-            this.setState(prevState => ({
-                currentTrack: newTrack
-            }));
-
-            net = false
-        } else {
-            net = true
+                net = false
+            } else {
+                net = true
+            }
         }
+
     }
 
-    playPause = () => {
-        let audio = new Audio(this.state.currentTrack.stream);
-        this.setState(prevState =>({
-            playing: !this.state.playing
-        }), () => {
-            this.state.playing ? audio.play() : audio.pause();
+    onClickHandle = (id) => {
+        this.audioplayer.playPauseAudio(id);
+        this.setState((prevState) => ({
+            playing: !prevState.playing
+        }))
+    }
+
+    stopPlayback = () => {
+        this.setState({
+            playing: false
         })
     }
 
-    render () {
-        const { playing } = this.state;
+
+    render() {
         return (
             <div style={bgStyle}>
-                <div onClick={this.playPause} onMouseMove={this.changeTrack} onTouchMove={this.changeTrack} style={ sectionStyle }>
-                    <img src={this.state.currentTrack.artwork} style={sectionStyle}></img>
+                <div onClick={() => {this.onClickHandle(this.state.currentTrack.id)}} onMouseMove={this.changeTrack} onTouchMove={this.changeTrack} >
+                    <Artwork currentTrackArtwork={this.state.currentTrack.artwork}/>
+                    <Audioplayer
+                        onRef={ref => (this.audioplayer = ref)}
+                        playing={this.state.playing}
+                        trackID={this.state.currentTrack.id}
+                        stopPlayback={this.stopPlayback}
+                    />
                 </div>
             </div>
         )
     }
 }
 
-var sectionStyle = {
-    // backgroundImage: "url(" + backgroundUrl + ")",
-    width: "100vw",
-    height: "100vh",
-    backgroundSize: 'cover',
-    backgroundRepeat: 'no-repeat',
-    position: 'center',
-    backgroundColor: 'slateblue'
-};
+
 
 var bgStyle = {
     width: "100vw",
