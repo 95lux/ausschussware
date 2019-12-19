@@ -3,6 +3,8 @@ import PropTypes from 'prop-types'
 
 const clientID='jMtgnPXQjVKtkucQ61iCf5jKyDXGXxbS'
 
+
+
 class Audioplayer extends React.Component {
     state =  {
         trackID: '',
@@ -30,20 +32,31 @@ class Audioplayer extends React.Component {
     //     }
     // }
 
+    componentDidUpdate = (prevProps, prevState) => {
+
+        if (this.state.trackID !== prevState.trackID && this.state.playing === true) {
+            let trackID = this.state.trackID;
+            let url = `https://api.soundcloud.com/tracks/${trackID}/stream?client_id=${clientID}`
+            // console.log('play');
+            this.player.src = url;
+            this.player.play();
+        }
+
+    }
+
     componentWillUnmount() {
         this.props.onRef(undefined)
     }
 
     playPauseAudio = (id) => {
-        if (this.props.trackID !== this.state.trackID) {
+        console.log('playPause');
+        if (id !== this.state.trackID) {
+            console.log(id);
             this.setState({
-                trackID: this.props.trackID,
-                playing: true });
-                let trackID = this.state.trackID;
-                let url = `https://api.soundcloud.com/tracks/${trackID}/stream?client_id=${clientID}`
-                // console.log('play');
-                this.player.src = url;
-                this.player.play();
+                trackID: id,
+                playing: true
+            });
+
         }
 
         if (this.state.playing && this.state.trackID === id) {
@@ -63,13 +76,17 @@ class Audioplayer extends React.Component {
         })
     }
 
+    playNext = () => {
+
+    }
+
     render () {
         return (
             <div>
                 <audio
                     ref={ref => this.player = ref}
                     src={this.state.src}
-                    onEnded={this.stopAudio}
+                    onEnded={this.playNext}
                 />
             </div>
 

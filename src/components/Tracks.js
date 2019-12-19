@@ -95,8 +95,8 @@ class Tracks extends React.Component {
         let url = `https://api.soundcloud.com/users/${userId}/tracks?client_id=${clientId}&linked_partitioning=1&limit=200`
         this.loadFullData(url);
         this.setState({ currentTrack: {
-            id: 1,
-            stream: null,
+            id: 335383636,
+            title: 'wasgeht',
             artwork: 'https://i1.sndcdn.com/avatars-000684564896-2q8pvk-t500x500.jpg'
         }})
         // this.changeTrack();
