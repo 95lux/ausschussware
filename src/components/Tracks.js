@@ -132,6 +132,14 @@ class Tracks extends React.Component {
         })
     }
 
+    playNext = () => {
+        let newTrack = precached[Math.floor(Math.random() * precached.length)];
+        this.setState(prevState => ({
+            currentTrack: newTrack
+        }));
+        this.audioplayer.playPauseAudio(newTrack.id);
+    }
+
 
     render() {
         return (
@@ -143,6 +151,7 @@ class Tracks extends React.Component {
                         playing={this.state.playing}
                         trackID={this.state.currentTrack.id}
                         stopPlayback={this.stopPlayback}
+                        playNext={this.playNext}
                     />
                 </div>
             </div>

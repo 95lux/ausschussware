@@ -76,17 +76,13 @@ class Audioplayer extends React.Component {
         })
     }
 
-    playNext = () => {
-
-    }
-
     render () {
         return (
             <div>
                 <audio
                     ref={ref => this.player = ref}
                     src={this.state.src}
-                    onEnded={this.playNext}
+                    onEnded={this.props.playNext}
                 />
             </div>
 
