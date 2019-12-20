@@ -1,6 +1,5 @@
 import React from 'react';
 import Tracks from './components/Tracks';
-import Audioplayer from './components/Audioplayer';
 
 import './App.css';
 

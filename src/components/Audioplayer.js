@@ -1,5 +1,4 @@
 import React from 'react'
-import PropTypes from 'prop-types'
 
 const clientID='jMtgnPXQjVKtkucQ61iCf5jKyDXGXxbS'
 
@@ -37,7 +36,6 @@ class Audioplayer extends React.Component {
         if (this.state.trackID !== prevState.trackID && this.state.playing === true) {
             let trackID = this.state.trackID;
             let url = `https://api.soundcloud.com/tracks/${trackID}/stream?client_id=${clientID}`
-            // console.log('play');
             this.player.src = url;
             this.player.play();
         }
@@ -49,9 +47,7 @@ class Audioplayer extends React.Component {
     }
 
     playPauseAudio = (id) => {
-        console.log('playPause');
         if (id !== this.state.trackID) {
-            console.log(id);
             this.setState({
                 trackID: id,
                 playing: true
